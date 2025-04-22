@@ -24,9 +24,11 @@ public class Post {
 
     private String coverImageUrl;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm", timezone = "Africa/Kampala")
+    // Remove or change JsonFormat to default ISO format
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @Temporal(TemporalType.TIMESTAMP)
     private Date publishedAt;
+
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm", timezone = "Africa/Kampala")
     @Temporal(TemporalType.TIMESTAMP)

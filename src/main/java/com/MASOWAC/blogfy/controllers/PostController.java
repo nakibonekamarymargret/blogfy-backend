@@ -1,8 +1,5 @@
 package com.MASOWAC.blogfy.controllers;
 
-
-import com.MASOWAC.blogfy.dto.PostRequest;
-import com.MASOWAC.blogfy.dto.PostResponse;
 import com.MASOWAC.blogfy.models.Post;
 import com.MASOWAC.blogfy.services.PostService;
 import org.springframework.http.HttpStatus;
@@ -15,33 +12,29 @@ import java.nio.file.AccessDeniedException;
 import java.security.Principal;
 import java.util.List;
 
-// PostController.java
 @RestController
 @RequestMapping("/posts")
-
 public class PostController {
-
     private final PostService postService;
 
     public PostController(PostService postService) {
         this.postService = postService;
     }
 
-    @PostMapping(value = "/create")
+    @PostMapping("/create")
     public ResponseEntity<?> createPost(
-            @RequestParam(required = false) String title,
-            @RequestParam(required = false) String content,
-            @RequestParam(value = "coverImageUrl", required = false) String coverImageUrl, // Expect the URL
+            @RequestParam String title,
+            @RequestParam String content,
             @RequestParam(value = "coverImageFile", required = false) MultipartFile coverImageFile,
             Principal principal
     ) throws IOException {
-        Post post = postService.createPost(title, content, coverImageUrl, principal);
+        Post post = postService.createPost(title, content, coverImageFile, principal);
         return ResponseEntity.status(HttpStatus.CREATED).body(post);
     }
 
     @PutMapping("/{id}/update")
-    public ResponseEntity<?> updatePost(@PathVariable Long id, @RequestBody PostRequest request, Principal principal) throws AccessDeniedException {
-        PostResponse updated = postService.updatePost(id, request, principal.getName());
+    public ResponseEntity<?> updatePost(@PathVariable Long id, @RequestBody Post updatedPost, Principal principal) throws AccessDeniedException {
+        Post updated = postService.updatePost(id, updatedPost, principal.getName());
         return ResponseEntity.ok(updated);
     }
 
@@ -57,14 +50,28 @@ public class PostController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PostResponse>> getAllPosts() {
+    public ResponseEntity<List<Post>> getAllPosts() {
         return ResponseEntity.ok(postService.getAllPosts());
     }
+//    @GetMapping
+//    public ResponseEntity<Map<String, Object>> getAllPosts(
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "3") int size
+//    ) {
+//        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+//        Page<Post> postsPage = postService.getAllPosts(pageable);
+//
+//        Map<String, Object> response = new HashMap<>();
+//        response.put("posts", postsPage.getContent());
+//        response.put("currentPage", postsPage.getNumber());
+//        response.put("totalItems", postsPage.getTotalElements());
+//        response.put("totalPages", postsPage.getTotalPages());
+//
+//        return new ResponseEntity<>(response, HttpStatus.OK);
+//    }
 
     @GetMapping("/tag/{tagName}")
-    public ResponseEntity<List<PostResponse>> getPostsByTag(@PathVariable String tagName) {
+    public ResponseEntity<List<Post>> getPostsByTag(@PathVariable String tagName) {
         return ResponseEntity.ok(postService.getPostsByTag(tagName));
     }
 }
-
-

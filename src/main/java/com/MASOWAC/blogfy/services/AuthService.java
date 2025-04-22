@@ -1,11 +1,6 @@
 package com.MASOWAC.blogfy.services;
 
-import com.MASOWAC.blogfy.dto.LoginRequest;
-import com.MASOWAC.blogfy.dto.LoginResponse;
-import com.MASOWAC.blogfy.dto.RegisterDto;
 import com.MASOWAC.blogfy.enums.UserRoles;
-import com.MASOWAC.blogfy.exceptions.DuplicateEmailException;
-import com.MASOWAC.blogfy.exceptions.DuplicateUsernameException;
 import com.MASOWAC.blogfy.models.Users;
 import com.MASOWAC.blogfy.repositories.UsersRepository;
 import com.MASOWAC.blogfy.security.JwtUtil;
@@ -17,6 +12,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -38,15 +35,15 @@ public class AuthService {
         this.userDetailsService = userDetailsService;
     }
 
-    //Default profile
-    private static final String DEFAULT_AVATAR_URL = "https://res.cloudinary.com/masowac/image/upload/v1744702625/rktq3arqosi1w3gc20nn.jpg";
+    //Default profile pic
+    private static final String DEFAULT_AVATAR_URL ="https://res.cloudinary.com/masowac/image/upload/v1744702625/rktq3arqosi1w3gc20nn.jpg";
 
-    public RegisterDto registerUser(Users user) {
+    public Map<String, Object> registerUser(Users user) {
         if (usersRepo.findByUsername(user.getUsername()).isPresent()) {
-            throw new DuplicateUsernameException("Username already exists");
+            throw new RuntimeException("Username already exists");
         }
         if (usersRepo.findByEmail(user.getEmail()).isPresent()) {
-            throw new DuplicateEmailException("Email already taken");
+            throw new RuntimeException("Email already taken");
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -57,24 +54,22 @@ public class AuthService {
 
         Users savedUser = usersRepo.save(user);
 
-        return new RegisterDto(
-                savedUser.getName(),
-                savedUser.getEmail(),
-                savedUser.getUsername(),
-                savedUser.getRole().name(),
-                savedUser.getEnabled()
-        );
+        Map<String, Object> result = new HashMap<>();
+        result.put("name", savedUser.getName());
+        result.put("email", savedUser.getEmail());
+        result.put("username", savedUser.getUsername());
+        result.put("role", savedUser.getRole().name());
+        result.put("enabled", savedUser.getEnabled());
+        return result;
     }
+    public Map<String, Object> login(Map<String, String> request) {
+        String loginDetails = request.get("loginDetails");
+        String password = request.get("password");
 
-    public LoginResponse login(LoginRequest request) {
-        String loginDetails = request.getLoginDetails();
         String email;
-
         if (loginDetails.contains("@")) {
-            // Login with email
             email = loginDetails;
         } else {
-            // Login with username -> resolve to email
             Optional<Users> userOpt = usersRepo.findByUsername(loginDetails);
             if (userOpt.isEmpty()) {
                 throw new BadCredentialsException("Invalid username or password");
@@ -82,9 +77,8 @@ public class AuthService {
             email = userOpt.get().getEmail();
         }
 
-        // Authenticate using resolved email and password
         Authentication auth = authManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, request.getPassword())
+                new UsernamePasswordAuthenticationToken(email, password)
         );
 
         Users user = usersRepo.findByEmail(email)
@@ -94,7 +88,13 @@ public class AuthService {
         String accessToken = jwtUtil.generateToken(userDetails);
         String refreshToken = jwtUtil.generateRefreshToken(user.getEmail());
 
-        return new LoginResponse(user.getUsername(), user.getEmail(), user.getRole().name(), accessToken, refreshToken);
+        Map<String, Object> response = new HashMap<>();
+        response.put("username", user.getUsername());
+        response.put("email", user.getEmail());
+        response.put("role", user.getRole().name());
+        response.put("accessToken", accessToken);
+        response.put("refreshToken", refreshToken);
+        return response;
     }
 
     public String validateAndExtractEmail(String refreshToken) {

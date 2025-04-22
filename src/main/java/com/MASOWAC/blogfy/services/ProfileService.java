@@ -1,8 +1,8 @@
 package com.MASOWAC.blogfy.services;
 
 
-import com.MASOWAC.blogfy.dto.ProfileResponseDto;
 import com.MASOWAC.blogfy.models.Users;
+import com.MASOWAC.blogfy.repositories.ProfileView;
 import com.MASOWAC.blogfy.repositories.UsersRepository;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
@@ -32,16 +32,10 @@ public class ProfileService {
     }
 
     //    view profile
-    public ProfileResponseDto viewProfile() {
-        Users user = getCurrentUser();
-        return new ProfileResponseDto(
-                user.getName(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getProfilePicUrl()
-        );
+    public ProfileView viewProfile(String username) {
+        return userRepo.getUserProfile(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
-
 
     //    Update profile
     public Users updateProfile(MultipartFile image, String name, String username) throws IOException {

@@ -14,6 +14,7 @@ public class CorsConfig implements CorsConfigurationSource {
         config.setAllowedOrigins(List.of("http://localhost:5173"));
         config.setAllowedMethods(List.of("POST","GET","PUT","DELETE","PATCH"));
         config.setAllowedHeaders(List.of("*"));
+
         return config;
     }
 }

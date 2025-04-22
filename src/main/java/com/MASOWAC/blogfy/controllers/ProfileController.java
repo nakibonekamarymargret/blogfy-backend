@@ -1,14 +1,15 @@
 package com.MASOWAC.blogfy.controllers;
 
 
-import com.MASOWAC.blogfy.dto.ProfileResponseDto;
 import com.MASOWAC.blogfy.models.Users;
+import com.MASOWAC.blogfy.repositories.ProfileView;
 import com.MASOWAC.blogfy.services.ProfileService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.security.Principal;
 
 @RestController
 @RequestMapping("/profile")
@@ -21,8 +22,8 @@ public class ProfileController {
 
     //    Get current user profile
     @GetMapping
-    public ResponseEntity<ProfileResponseDto> getProfile() {
-        ProfileResponseDto profile = profileService.viewProfile();
+    public ResponseEntity<ProfileView> getProfile(Principal principal) {
+        ProfileView profile = profileService.viewProfile(principal.getName());
         return ResponseEntity.ok(profile);
     }
 

@@ -13,5 +13,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findByAuthor(Users author);
 
     List<Post> getPostByTitleAndAuthor(String title, Users author);
+//    Page<Post> findAllByOrderByPublishedAtDesc(Pageable pageable);
 
 }
