@@ -3,6 +3,7 @@ package com.MASOWAC.blogfy.config;
 import com.MASOWAC.blogfy.security.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -30,6 +31,10 @@ public class SecurityConfiguration {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**","/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/comments/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/comments/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/comments/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/comments/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

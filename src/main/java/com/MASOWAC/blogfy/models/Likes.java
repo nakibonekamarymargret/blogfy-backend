@@ -3,7 +3,6 @@ package com.MASOWAC.blogfy.models;
 import com.MASOWAC.blogfy.enums.LikesStatus;
 import jakarta.persistence.*;
 
-
 import java.util.Date;
 
 @Entity

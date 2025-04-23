@@ -1,6 +1,7 @@
 package com.MASOWAC.blogfy.models;
 
 import com.MASOWAC.blogfy.enums.CommentStatus;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 
@@ -15,7 +16,7 @@ public class Comments {
     private Long id;
     private String content;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm", timezone = "Africa/Kampala")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX") // ISO 8601 with timezone
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
     @Enumerated(EnumType.STRING)
@@ -23,10 +24,11 @@ public class Comments {
 
     @ManyToOne
     @JoinColumn(name = "post_id")
+    @JsonBackReference
     private Post post;
-
     @ManyToOne
     @JoinColumn(name = "user_id")
+//    @JsonIgnore
     private Users user;
 
     @OneToMany(mappedBy = "comments",cascade= CascadeType.ALL)
@@ -39,8 +41,8 @@ public class Comments {
         return content;
     }
 
-    public void setContent(String text) {
-        this.content = text;
+    public void setContent(String content) {
+        this.content = content;
     }
 
     public Date getCreatedAt() {
@@ -75,7 +77,7 @@ public class Comments {
         this.post = post;
     }
 
-    public Users getUser(Users user) {
+    public Users getUser() {
         return this.user;
     }
 
@@ -95,7 +97,7 @@ public class Comments {
     public String toString() {
         return "Comments{" +
                 "id=" + id +
-                ", text='" + content + '\'' +
+                ", content='" + content + '\'' +
                 ", createdAt=" + createdAt +
                 ", status=" + status +
                 ", post=" + post +

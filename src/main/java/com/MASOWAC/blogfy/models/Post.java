@@ -3,6 +3,7 @@ package com.MASOWAC.blogfy.models;
 import com.MASOWAC.blogfy.enums.PostStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import org.hibernate.validator.constraints.Length;
@@ -42,7 +43,8 @@ public class Post {
     private Users author;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
-    private List<Comments> comments = new ArrayList<>();
+    @JsonManagedReference
+    private List<Comments> comments;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
     @JsonIgnore

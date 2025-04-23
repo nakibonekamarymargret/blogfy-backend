@@ -10,7 +10,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/posts")
@@ -49,11 +52,30 @@ public class PostController {
         return ResponseEntity.ok(postService.getPostById(id));
     }
 
+
     @GetMapping
-    public ResponseEntity<List<Post>> getAllPosts() {
-        return ResponseEntity.ok(postService.getAllPosts());
+    public ResponseEntity<List<Map<String, Object>>> getAllPosts() {
+        List<Post> allPosts = postService.getAllPosts();
+        List<Map<String, Object>> postResponse = new ArrayList<>();
+
+        for (Post post : allPosts) {
+            Map<String, Object> singlePost = new HashMap<>();
+            singlePost.put("id", post.getId());
+            singlePost.put("title", post.getTitle());
+            singlePost.put("content", post.getContent());
+            singlePost.put("coverImageUrl", post.getCoverImageUrl());
+            singlePost.put("author", post.getAuthor().getUsername());
+            singlePost.put("publishedAt", post.getPublishedAt());
+
+
+            postResponse.add(singlePost);
+        }
+
+        return new ResponseEntity<>(postResponse, HttpStatus.OK);
     }
-//    @GetMapping
+
+
+    //    @GetMapping
 //    public ResponseEntity<Map<String, Object>> getAllPosts(
 //            @RequestParam(defaultValue = "0") int page,
 //            @RequestParam(defaultValue = "3") int size
@@ -69,6 +91,14 @@ public class PostController {
 //
 //        return new ResponseEntity<>(response, HttpStatus.OK);
 //    }
+    @GetMapping("/authors/{authorId}/posts")
+    public ResponseEntity<List<Post>> getPostsByAuthor(@PathVariable Long authorId) {
+        List<Post> posts = postService.getPostsByAuthor(authorId);
+        if (posts.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(posts); // No posts found
+        }
+        return ResponseEntity.ok(posts);
+    }
 
     @GetMapping("/tag/{tagName}")
     public ResponseEntity<List<Post>> getPostsByTag(@PathVariable String tagName) {

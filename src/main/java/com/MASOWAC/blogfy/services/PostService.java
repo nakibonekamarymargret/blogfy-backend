@@ -1,6 +1,7 @@
 package com.MASOWAC.blogfy.services;
 
 import com.MASOWAC.blogfy.enums.PostStatus;
+import com.MASOWAC.blogfy.exceptions.PostNotFoundException;
 import com.MASOWAC.blogfy.models.Post;
 import com.MASOWAC.blogfy.models.Tag;
 import com.MASOWAC.blogfy.models.Users;
@@ -83,18 +84,24 @@ public class PostService {
     }
 
     public Post getPostById(Long id) {
-        return postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found"));
+        return postRepository.findByIdWithAuthor(id).orElseThrow(() -> new PostNotFoundException("Post not found"));
     }
-//    public Page<Post> getAllPosts(Pageable pageable){
+
+    //    public Page<Post> getAllPosts(Pageable pageable){
 //        return postRepository.findAllByOrderByPublishedAtDesc( pageable);
 //    }
-   public List<Post> getAllPosts() {
-       return postRepository.findAll(Sort.by(Sort.Direction.DESC, "publishedAt"));
+    public List<Post> getAllPosts() {
+        return postRepository.findAll(Sort.by(Sort.Direction.DESC, "publishedAt"));
 
-   }
+    }
 
     public List<Post> getPostsByTag(String tagName) {
         Tag tag = tagRepository.findByName(tagName).orElseThrow(() -> new RuntimeException("Tag not found"));
         return new ArrayList<>(tag.getPosts());
     }
+
+    public List<Post> getPostsByAuthor(Long authorId) {
+        return postRepository.findByAuthorId(authorId); // Assuming you have a method in your repository
+    }
+
 }
