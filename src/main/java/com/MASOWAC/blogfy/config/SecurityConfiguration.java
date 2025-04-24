@@ -27,7 +27,7 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        String[] publicReadModules = {"/posts/**", "/comments/**", "/likes/**", "/bookmarks/**"};
+        String[] publicReadModules = {"/posts/**", "/comments/**", "/bookmarks/**"};
 
         return http
                 .csrf(csrf -> csrf.disable())

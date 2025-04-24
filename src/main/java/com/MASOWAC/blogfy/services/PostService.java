@@ -3,12 +3,13 @@ package com.MASOWAC.blogfy.services;
 import com.MASOWAC.blogfy.enums.PostStatus;
 import com.MASOWAC.blogfy.exceptions.PostNotFoundException;
 import com.MASOWAC.blogfy.models.Post;
+import com.MASOWAC.blogfy.models.PostLikes;
 import com.MASOWAC.blogfy.models.Tag;
 import com.MASOWAC.blogfy.models.Users;
+import com.MASOWAC.blogfy.repositories.PostLikesRepository;
 import com.MASOWAC.blogfy.repositories.PostRepository;
 import com.MASOWAC.blogfy.repositories.TagRepository;
 import com.MASOWAC.blogfy.repositories.UsersRepository;
-import com.cloudinary.Cloudinary;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -18,61 +19,34 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
-// PostService.java
 @Service
 public class PostService {
+
     private final PostRepository postRepository;
     private final TagRepository tagRepository;
     private final UsersRepository userRepository;
-    private final Cloudinary cloudinary;
+    private final PostLikesRepository postLikesRepo;
 
-    public PostService(PostRepository postRepository, TagRepository tagRepository, UsersRepository userRepository, Cloudinary cloudinary) {
+    public PostService(PostRepository postRepository, TagRepository tagRepository,
+                       UsersRepository userRepository, PostLikesRepository postLikesRepo) {
         this.postRepository = postRepository;
         this.tagRepository = tagRepository;
         this.userRepository = userRepository;
-        this.cloudinary = cloudinary;
+        this.postLikesRepo = postLikesRepo;
     }
 
-    //    public Post createPost(String title, String content, MultipartFile coverImageUrl, Principal principal) throws IOException {
-//        Post post = new Post();
-//        post.setTitle(title);
-//        post.setContent(content);
-//
-//        if (coverImageUrl != null && !coverImageUrl.isEmpty()) {
-//            Map uploadResult = cloudinary.uploader().upload(coverImageUrl.getBytes(), ObjectUtils.emptyMap());
-//            String imageUrl = uploadResult.get("secure_url").toString();
-//            post.setCoverImageUrl(imageUrl);
-//        }
-//
-//        Users author;
-//        String loginName = principal.getName();
-//
-//        if (loginName.contains("@")) {
-//            // Assume it's an email
-//            author = userRepository.findByEmail(loginName)
-//                    .orElseThrow(() -> new RuntimeException("Author not found with email: " + loginName));
-//        } else {
-//            // Assume it's a username
-//            author = userRepository.findByUsername(loginName)
-//                    .orElseThrow(() -> new RuntimeException("Author not found with username: " + loginName));
-//        }
-//
-//        post.setAuthor(author);
-//        post.setPublishedAt(new Date());
-//        post.setStatus(PostStatus.published);
-//        post.setCoverImageUrl(coverImageUrl);
-//
-//        return postRepository.save(post);
-//    }
     public Post createPost(String title, String content, String coverImageUrl, Principal principal) throws IOException {
         Post post = new Post();
         post.setTitle(title);
         post.setContent(content);
         post.setCoverImageUrl(coverImageUrl); // Directly set the URL
 
-        Users author;
         String loginName = principal.getName();
+        Users author;
+
         if (loginName.contains("@")) {
             author = userRepository.findByEmail(loginName)
                     .orElseThrow(() -> new RuntimeException("Author not found with email: " + loginName));
@@ -80,6 +54,7 @@ public class PostService {
             author = userRepository.findByUsername(loginName)
                     .orElseThrow(() -> new RuntimeException("Author not found with username: " + loginName));
         }
+
         post.setAuthor(author);
         post.setPublishedAt(new Date());
         post.setStatus(PostStatus.published);
@@ -107,6 +82,7 @@ public class PostService {
         if (!post.getAuthor().getUsername().equals(username)) {
             throw new AccessDeniedException("Unauthorized to delete this post");
         }
+
         post.setStatus(PostStatus.deleted);
         postRepository.save(post);
     }
@@ -115,12 +91,8 @@ public class PostService {
         return postRepository.findByIdWithAuthor(id).orElseThrow(() -> new PostNotFoundException("Post not found"));
     }
 
-    //    public Page<Post> getAllPosts(Pageable pageable){
-//        return postRepository.findAllByOrderByPublishedAtDesc( pageable);
-//    }
     public List<Post> getAllPosts() {
         return postRepository.findAll(Sort.by(Sort.Direction.DESC, "publishedAt"));
-
     }
 
     public List<Post> getPostsByTag(String tagName) {
@@ -129,7 +101,67 @@ public class PostService {
     }
 
     public List<Post> getPostsByAuthor(Long authorId) {
-        return postRepository.findByAuthorId(authorId); // Assuming you have a method in your repository
+        return postRepository.findByAuthorId(authorId);
     }
 
+    // Like/Unlike Logic
+    public void likeUnlikePost(Long postId, String usernameOrEmail) {
+        // Fetch post by postId
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        // Find the user by username or email
+        Users user = userRepository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Check if user has already liked the post
+        Optional<PostLikes> existingLike = postLikesRepo.findByPostAndLikedBy(post, user);
+
+        if (existingLike.isPresent()) {
+            // Unlike
+            postLikesRepo.delete(existingLike.get());
+        } else {
+            // Like
+            PostLikes like = new PostLikes();
+            like.setPost(post);
+            like.setLikedBy(user);
+            like.setLikedAt(new Date());
+            postLikesRepo.save(like);
+        }
+    }
+
+
+    public boolean hasUserLikedPost(Long postId, String username) {
+        return postLikesRepo.findByPostIdAndLikedBy_Username(postId, username).isPresent();
+    }
+
+    public void removeLikeUnlikeService(Long id) {
+        postLikesRepo.deleteById(id);
+    }
+
+    public Integer noOfLikes(Long postId) {
+        AtomicReference<Integer> count = new AtomicReference<>(0);
+        postLikesRepo.findAllByPostId(postId)
+                .forEach(postLikes -> {
+                    if (postLikes.getLikedBy() != null) {
+                        count.updateAndGet(v -> v + 1);
+                    }
+                });
+        return count.get();
+    }
+
+    public Integer noOfUnLikes(Long postId) {
+        AtomicReference<Integer> count = new AtomicReference<>(0);
+        postLikesRepo.findAllByPostId(postId)
+                .forEach(blogsLikes -> {
+                    if (blogsLikes.getUnlikedBy() != null) {
+                        count.updateAndGet(v -> v + 1);
+                    }
+                });
+        return count.get();
+    }
+
+    public List<PostLikes> allPostLikes() {
+        return postLikesRepo.findAll();
+    }
 }

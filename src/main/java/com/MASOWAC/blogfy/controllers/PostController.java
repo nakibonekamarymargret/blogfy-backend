@@ -103,4 +103,29 @@ public class PostController {
     public ResponseEntity<List<Post>> getPostsByTag(@PathVariable String tagName) {
         return ResponseEntity.ok(postService.getPostsByTag(tagName));
     }
-}
+    //    Likes
+    @PostMapping("/likeunlike/{postId}")
+    public ResponseEntity<?> addLikeUnlike(@PathVariable Long postId, Principal principal) {
+        postService.likeUnlikePost(postId, principal.getName());
+        return ResponseEntity.ok().build();
+    }
+
+
+    @PostMapping("/likeunlike/remove/{id}")
+        // Remove User Like On A Blog
+    void removeLikeUnlike(@PathVariable Long id) {
+        postService.removeLikeUnlikeService(id);
+    }
+
+    @GetMapping("/likes/{id}")
+        // No Of Unlikes Received By A Blog
+    Integer noOfLikesBlog(@PathVariable Long id) {
+        return postService.noOfLikes(id);
+    }
+
+    @GetMapping("/unlikes/{id}")
+        // No Of Likes Received By A plog
+    Integer noOfUnlikesBlog(@PathVariable Long id) {
+        return postService.noOfUnLikes(id);
+    }
+} 

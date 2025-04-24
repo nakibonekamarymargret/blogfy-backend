@@ -25,5 +25,6 @@ public interface UsersRepository extends JpaRepository<Users, Long> {
 
     @Query("SELECT u.name AS name, u.username AS username, u.email AS email, u.profilePicUrl AS profilePicUrl FROM Users u WHERE u.username = :username")
     Optional<ProfileView> getUserProfile(@Param("username") String username);
+    Optional<Users> findByUsernameOrEmail(String username, String email);
 
 }

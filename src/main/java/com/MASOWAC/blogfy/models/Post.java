@@ -46,10 +46,9 @@ public class Post {
     @JsonManagedReference
     private List<Comments> comments;
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "post", cascade = CascadeType.ALL)
     @JsonIgnore
-    private List<Likes> likes = new ArrayList<>();
-
+    private List<PostLikes> likesUnlikes;
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
     private List<PostImages> postImages = new ArrayList<>();
 
@@ -147,12 +146,12 @@ public class Post {
         this.comments = comments;
     }
 
-    public List<Likes> getLikes() {
-        return likes;
+    public List<PostLikes> getLikesUnlikes() {
+        return likesUnlikes;
     }
 
-    public void setLikes(List<Likes> likes) {
-        this.likes = likes;
+    public void setLikesUnlikes(List<PostLikes> likesUnlikes) {
+        this.likesUnlikes = likesUnlikes;
     }
 
     public List<PostImages> getPostImages() {
@@ -172,19 +171,6 @@ public class Post {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Post post = (Post) o;
-        return Objects.equals(id, post.id) && Objects.equals(title, post.title);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, title);
-    }
-
-    @Override
     public String toString() {
         return "Post{" +
                 "id=" + id +
@@ -196,7 +182,7 @@ public class Post {
                 ", status=" + status +
                 ", author=" + author +
                 ", comments=" + comments +
-                ", likes=" + likes +
+                ", likesUnlikes=" + likesUnlikes +
                 ", postImages=" + postImages +
                 ", tags=" + tags +
                 '}';

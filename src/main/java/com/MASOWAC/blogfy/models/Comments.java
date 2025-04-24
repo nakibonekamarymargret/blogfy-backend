@@ -5,9 +5,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 @Entity
 public class Comments {
@@ -31,8 +29,6 @@ public class Comments {
 //    @JsonIgnore
     private Users user;
 
-    @OneToMany(mappedBy = "comments",cascade= CascadeType.ALL)
-    private List<Likes>likes = new ArrayList<>();
 
     public Comments() {
     }
@@ -85,14 +81,6 @@ public class Comments {
         this.user = user;
     }
 
-    public List<Likes> getLikes() {
-        return likes;
-    }
-
-    public void setLikes(List<Likes> likes) {
-        this.likes = likes;
-    }
-
     @Override
     public String toString() {
         return "Comments{" +
@@ -102,7 +90,6 @@ public class Comments {
                 ", status=" + status +
                 ", post=" + post +
                 ", user=" + user +
-                ", likes=" + likes +
                 '}';
     }
 }
