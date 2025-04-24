@@ -1,62 +1,40 @@
 package com.MASOWAC.blogfy.controllers;
 
+import com.MASOWAC.blogfy.models.Likes;
 import com.MASOWAC.blogfy.models.Post;
-import com.MASOWAC.blogfy.models.Users;
+import com.MASOWAC.blogfy.repositories.PostRepository;
 import com.MASOWAC.blogfy.services.LikesService;
-import com.MASOWAC.blogfy.services.PostService;
-import com.MASOWAC.blogfy.services.UserService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
+import java.security.Principal;
+import java.util.List;
 
 @RestController
-@RequestMapping("/likes")
+@RequestMapping("/like")
+@CrossOrigin(origins = "*") // Allow all origins for testing; consider restricting in production
 public class LikesController {
 
     private final LikesService likesService;
-    private final UserService userService;
-    private final PostService postService;
+    private final PostRepository postRepository;
 
-    public LikesController(LikesService likesService, UserService userService, PostService postService) {
+    public LikesController(LikesService likesService, PostRepository postRepository) {
         this.likesService = likesService;
-        this.userService = userService;
-        this.postService = postService;
+        this.postRepository = postRepository;
     }
 
-    @PostMapping("/toggle/{postId}")
-    public ResponseEntity<?> toggleLike(@PathVariable Long postId, @RequestParam Long id) {
-        Optional<Users> userOptional = userService.getUserById(id);
-        Post post = postService.getPostById(postId);
-
-        if (userOptional.isEmpty() || post == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(likesService.toggleLikePost(userOptional.get(), post));
+    @GetMapping("/post/{postId}")
+    public List<Likes> getLikesByPost(@PathVariable Long postId) {
+        Post post = postRepository.findById(postId).orElseThrow();
+        return likesService.getLikesByPost(post);
     }
 
-    @GetMapping("/count/{postId}")
-    public ResponseEntity<?> countLikes(@PathVariable Long postId) {
-        Post post = postService.getPostById(postId);
-
-        if (post == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(likesService.countLikesByPost(post));
+    @PostMapping("/post/{postId}")
+    public Likes likePost(@PathVariable Long postId, @RequestBody Likes likes, Principal principal) {
+        return likesService.likePost(postId, likes, principal.getName());
     }
 
-    @GetMapping("/isLiked/{postId}")
-    public ResponseEntity<?> isLiked(@PathVariable Long postId, @RequestParam Long userId) {
-        Optional<Users> userOptional = userService.getUserById(userId);
-        Post post = postService.getPostById(postId);
-
-        if (userOptional.isEmpty() || post == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        boolean isLiked = likesService.isPostLikedByUser(userOptional.get(), post);
-        return ResponseEntity.ok(isLiked);
+    @DeleteMapping("/{id}")
+    public void unlikePost(@PathVariable Long id, Principal principal) {
+        likesService.unlikePost(id, principal.getName());
     }
 }

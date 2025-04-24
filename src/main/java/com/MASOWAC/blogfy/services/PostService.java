@@ -9,10 +9,8 @@ import com.MASOWAC.blogfy.repositories.PostRepository;
 import com.MASOWAC.blogfy.repositories.TagRepository;
 import com.MASOWAC.blogfy.repositories.UsersRepository;
 import com.cloudinary.Cloudinary;
-import com.cloudinary.utils.ObjectUtils;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -20,7 +18,6 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 // PostService.java
 @Service
@@ -37,24 +34,55 @@ public class PostService {
         this.cloudinary = cloudinary;
     }
 
-    public Post createPost(String title, String content, MultipartFile coverImageFile, Principal principal) throws IOException {
+    //    public Post createPost(String title, String content, MultipartFile coverImageUrl, Principal principal) throws IOException {
+//        Post post = new Post();
+//        post.setTitle(title);
+//        post.setContent(content);
+//
+//        if (coverImageUrl != null && !coverImageUrl.isEmpty()) {
+//            Map uploadResult = cloudinary.uploader().upload(coverImageUrl.getBytes(), ObjectUtils.emptyMap());
+//            String imageUrl = uploadResult.get("secure_url").toString();
+//            post.setCoverImageUrl(imageUrl);
+//        }
+//
+//        Users author;
+//        String loginName = principal.getName();
+//
+//        if (loginName.contains("@")) {
+//            // Assume it's an email
+//            author = userRepository.findByEmail(loginName)
+//                    .orElseThrow(() -> new RuntimeException("Author not found with email: " + loginName));
+//        } else {
+//            // Assume it's a username
+//            author = userRepository.findByUsername(loginName)
+//                    .orElseThrow(() -> new RuntimeException("Author not found with username: " + loginName));
+//        }
+//
+//        post.setAuthor(author);
+//        post.setPublishedAt(new Date());
+//        post.setStatus(PostStatus.published);
+//        post.setCoverImageUrl(coverImageUrl);
+//
+//        return postRepository.save(post);
+//    }
+    public Post createPost(String title, String content, String coverImageUrl, Principal principal) throws IOException {
         Post post = new Post();
         post.setTitle(title);
         post.setContent(content);
+        post.setCoverImageUrl(coverImageUrl); // Directly set the URL
 
-        if (coverImageFile != null && !coverImageFile.isEmpty()) {
-            Map uploadResult = cloudinary.uploader().upload(coverImageFile.getBytes(), ObjectUtils.emptyMap());
-            String imageUrl = uploadResult.get("secure_url").toString();
-            post.setCoverImageUrl(imageUrl);
+        Users author;
+        String loginName = principal.getName();
+        if (loginName.contains("@")) {
+            author = userRepository.findByEmail(loginName)
+                    .orElseThrow(() -> new RuntimeException("Author not found with email: " + loginName));
+        } else {
+            author = userRepository.findByUsername(loginName)
+                    .orElseThrow(() -> new RuntimeException("Author not found with username: " + loginName));
         }
-
-        Users author = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Author not found"));
-
         post.setAuthor(author);
         post.setPublishedAt(new Date());
         post.setStatus(PostStatus.published);
-
         return postRepository.save(post);
     }
 

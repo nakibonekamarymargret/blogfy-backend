@@ -27,22 +27,30 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        String[] publicReadModules = {"/posts/**", "/comments/**", "/likes/**", "/bookmarks/**"};
+
         return http
                 .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**","/posts/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/comments/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/comments/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/comments/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/comments/**").authenticated()
-                        .anyRequest().authenticated()
-                )
+                .authorizeHttpRequests(auth -> {
+                    // Permit all requests to /auth/**
+                    auth.requestMatchers("/auth/**").permitAll();
+
+                    // Permit GET requests and require auth for others
+                    for (String module : publicReadModules) {
+                        auth.requestMatchers(HttpMethod.GET, module).permitAll();
+                        auth.requestMatchers(HttpMethod.POST, module).authenticated();
+                        auth.requestMatchers(HttpMethod.PUT, module).authenticated();
+                        auth.requestMatchers(HttpMethod.DELETE, module).authenticated();
+                    }
+
+                    // Any other request must be authenticated
+                    auth.anyRequest().authenticated();
+                })
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-//                .authenticationProvider(authProvider())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-                .cors(c->c.configurationSource(corsConfig))
+                .cors(c -> c.configurationSource(corsConfig))
                 .build();
     }
 
@@ -50,6 +58,7 @@ public class SecurityConfiguration {
     public PasswordEncoder passEncoder() {
         return new BCryptPasswordEncoder();
     }
+
     @Bean
     public AuthenticationManager authManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();

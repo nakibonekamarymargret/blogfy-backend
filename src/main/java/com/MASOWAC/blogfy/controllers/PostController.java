@@ -5,7 +5,6 @@ import com.MASOWAC.blogfy.services.PostService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -28,10 +27,10 @@ public class PostController {
     public ResponseEntity<?> createPost(
             @RequestParam String title,
             @RequestParam String content,
-            @RequestParam(value = "coverImageFile", required = false) MultipartFile coverImageFile,
+            @RequestParam(value = "coverImageUrl", required = false) String coverImageUrl,
             Principal principal
     ) throws IOException {
-        Post post = postService.createPost(title, content, coverImageFile, principal);
+        Post post = postService.createPost(title, content, coverImageUrl, principal);
         return ResponseEntity.status(HttpStatus.CREATED).body(post);
     }
 
